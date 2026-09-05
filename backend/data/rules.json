@@ -1,0 +1,258 @@
+{
+  "current_fy": "2025-26",
+  "rules": [
+    {
+      "rule_id": "PF_EMPLOYEE_RATE",
+      "fy": "2025-26",
+      "category": "pf",
+      "description": "Employee's EPF contribution rate, applied to (Basic + DA).",
+      "value": 0.12,
+      "unit": "fraction_of_basic",
+      "applies_to": ["old_regime", "new_regime"],
+      "source": "EPF & MP Act, 1952"
+    },
+    {
+      "rule_id": "PF_EMPLOYER_RATE",
+      "fy": "2025-26",
+      "category": "pf",
+      "description": "Employer's EPF contribution rate, applied to (Basic + DA), subject to the statutory wage ceiling unless the employer voluntarily contributes on full basic.",
+      "value": 0.12,
+      "unit": "fraction_of_basic",
+      "applies_to": ["old_regime", "new_regime"],
+      "source": "EPF & MP Act, 1952"
+    },
+    {
+      "rule_id": "PF_WAGE_CEILING",
+      "fy": "2025-26",
+      "category": "pf",
+      "description": "Statutory monthly wage ceiling up to which mandatory EPF/EPS contribution applies. Many employers contribute on full basic voluntarily, which this tool treats as an explicit opt-in.",
+      "value": 15000,
+      "unit": "inr_per_month",
+      "applies_to": ["old_regime", "new_regime"],
+      "source": "EPF & MP Act, 1952"
+    },
+    {
+      "rule_id": "ESI_WAGE_THRESHOLD",
+      "fy": "2025-26",
+      "category": "esi",
+      "description": "Monthly gross wage threshold at or below which ESI coverage is mandatory.",
+      "value": 21000,
+      "unit": "inr_per_month",
+      "applies_to": ["old_regime", "new_regime"],
+      "source": "ESI Act, 1948"
+    },
+    {
+      "rule_id": "ESI_EMPLOYEE_RATE",
+      "fy": "2025-26",
+      "category": "esi",
+      "description": "Employee's ESI contribution rate on gross wages, when ESI-eligible.",
+      "value": 0.0075,
+      "unit": "fraction_of_gross",
+      "applies_to": ["old_regime", "new_regime"],
+      "source": "ESI Act, 1948"
+    },
+    {
+      "rule_id": "ESI_EMPLOYER_RATE",
+      "fy": "2025-26",
+      "category": "esi",
+      "description": "Employer's ESI contribution rate on gross wages, when the employee is ESI-eligible.",
+      "value": 0.0325,
+      "unit": "fraction_of_gross",
+      "applies_to": ["old_regime", "new_regime"],
+      "source": "ESI Act, 1948"
+    },
+    {
+      "rule_id": "GRATUITY_FACTOR",
+      "fy": "2025-26",
+      "category": "gratuity",
+      "description": "Gratuity payable per completed year of service = (last drawn monthly Basic + DA) x 15/26. CTC breakups commonly provision this annually as an employer cost.",
+      "value": 0.576923077,
+      "unit": "fraction_of_monthly_basic_per_year_of_service",
+      "applies_to": ["old_regime", "new_regime"],
+      "source": "Payment of Gratuity Act, 1972, Section 4(2)"
+    },
+    {
+      "rule_id": "GRATUITY_EXEMPTION_CAP",
+      "fy": "2025-26",
+      "category": "gratuity",
+      "description": "Lifetime income-tax exemption cap on gratuity received by employees covered under the Payment of Gratuity Act.",
+      "value": 2000000,
+      "unit": "inr_lifetime",
+      "applies_to": ["old_regime", "new_regime"],
+      "source": "Income Tax Act, Section 10(10)"
+    },
+    {
+      "rule_id": "HRA_METRO_PCT",
+      "fy": "2025-26",
+      "category": "hra",
+      "description": "HRA exemption limb: 50% of (Basic + DA) for employees residing in Mumbai, Delhi, Kolkata or Chennai.",
+      "value": 0.50,
+      "unit": "fraction_of_basic",
+      "applies_to": ["old_regime"],
+      "source": "Income Tax Act, Section 10(13A), Rule 2A"
+    },
+    {
+      "rule_id": "HRA_NONMETRO_PCT",
+      "fy": "2025-26",
+      "category": "hra",
+      "description": "HRA exemption limb: 40% of (Basic + DA) for employees residing outside the four metros.",
+      "value": 0.40,
+      "unit": "fraction_of_basic",
+      "applies_to": ["old_regime"],
+      "source": "Income Tax Act, Section 10(13A), Rule 2A"
+    },
+    {
+      "rule_id": "HRA_RENT_OFFSET_PCT",
+      "fy": "2025-26",
+      "category": "hra",
+      "description": "HRA exemption limb: rent paid minus 10% of (Basic + DA).",
+      "value": 0.10,
+      "unit": "fraction_of_basic",
+      "applies_to": ["old_regime"],
+      "source": "Income Tax Act, Section 10(13A), Rule 2A"
+    },
+    {
+      "rule_id": "STD_DEDUCTION_OLD",
+      "fy": "2025-26",
+      "category": "deduction",
+      "description": "Standard deduction available to salaried taxpayers under the old tax regime.",
+      "value": 50000,
+      "unit": "inr",
+      "applies_to": ["old_regime"],
+      "source": "Income Tax Act, Section 16(ia)"
+    },
+    {
+      "rule_id": "STD_DEDUCTION_NEW",
+      "fy": "2025-26",
+      "category": "deduction",
+      "description": "Standard deduction available to salaried taxpayers under the new tax regime.",
+      "value": 75000,
+      "unit": "inr",
+      "applies_to": ["new_regime"],
+      "source": "Income Tax Act, Section 16(ia), Finance Act 2024"
+    },
+    {
+      "rule_id": "CAP_80C",
+      "fy": "2025-26",
+      "category": "deduction",
+      "description": "Aggregate cap on deductions under Section 80C (EPF, PPF, ELSS, life insurance premium, principal repayment on home loan, etc.). Not available under the new regime.",
+      "value": 150000,
+      "unit": "inr",
+      "applies_to": ["old_regime"],
+      "source": "Income Tax Act, Section 80C"
+    },
+    {
+      "rule_id": "CAP_80D_SELF",
+      "fy": "2025-26",
+      "category": "deduction",
+      "description": "Cap on health insurance premium deduction for self, spouse and dependent children, where the eldest insured is below 60. Not available under the new regime.",
+      "value": 25000,
+      "unit": "inr",
+      "applies_to": ["old_regime"],
+      "source": "Income Tax Act, Section 80D"
+    },
+    {
+      "rule_id": "CAP_80D_SENIOR",
+      "fy": "2025-26",
+      "category": "deduction",
+      "description": "Cap on health insurance premium deduction for self/family where the eldest insured is a senior citizen (60+). Not available under the new regime.",
+      "value": 50000,
+      "unit": "inr",
+      "applies_to": ["old_regime"],
+      "source": "Income Tax Act, Section 80D"
+    },
+    {
+      "rule_id": "OLD_REGIME_SLABS",
+      "fy": "2025-26",
+      "category": "tax_slab",
+      "description": "Old regime income tax slabs for individuals below 60 years.",
+      "value": [
+        {"min": 0, "max": 250000, "rate": 0.0},
+        {"min": 250000, "max": 500000, "rate": 0.05},
+        {"min": 500000, "max": 1000000, "rate": 0.20},
+        {"min": 1000000, "max": null, "rate": 0.30}
+      ],
+      "unit": "slab_table",
+      "applies_to": ["old_regime"],
+      "source": "Income Tax Act, First Schedule (unchanged for FY 2025-26)"
+    },
+    {
+      "rule_id": "OLD_REGIME_REBATE_87A",
+      "fy": "2025-26",
+      "category": "tax_rebate",
+      "description": "Section 87A rebate under the old regime: full rebate (tax reduced to nil) if taxable income does not exceed the threshold, capped at the max rebate amount.",
+      "value": {"taxable_income_threshold": 500000, "max_rebate": 12500},
+      "unit": "rebate_rule",
+      "applies_to": ["old_regime"],
+      "source": "Income Tax Act, Section 87A"
+    },
+    {
+      "rule_id": "NEW_REGIME_SLABS",
+      "fy": "2025-26",
+      "category": "tax_slab",
+      "description": "New regime income tax slabs, as revised by the Finance Act 2025 (effective AY 2026-27 / FY 2025-26).",
+      "value": [
+        {"min": 0, "max": 400000, "rate": 0.0},
+        {"min": 400000, "max": 800000, "rate": 0.05},
+        {"min": 800000, "max": 1200000, "rate": 0.10},
+        {"min": 1200000, "max": 1600000, "rate": 0.15},
+        {"min": 1600000, "max": 2000000, "rate": 0.20},
+        {"min": 2000000, "max": 2400000, "rate": 0.25},
+        {"min": 2400000, "max": null, "rate": 0.30}
+      ],
+      "unit": "slab_table",
+      "applies_to": ["new_regime"],
+      "source": "Finance Act 2025, Union Budget 2025-26"
+    },
+    {
+      "rule_id": "NEW_REGIME_REBATE_87A",
+      "fy": "2025-26",
+      "category": "tax_rebate",
+      "description": "Section 87A rebate under the new regime: full rebate (tax reduced to nil) if taxable income does not exceed the threshold, capped at the max rebate amount. Marginal relief applies just above the threshold (not modelled in this MVP).",
+      "value": {"taxable_income_threshold": 1200000, "max_rebate": 60000},
+      "unit": "rebate_rule",
+      "applies_to": ["new_regime"],
+      "source": "Income Tax Act, Section 87A, Finance Act 2025"
+    },
+    {
+      "rule_id": "CESS_RATE",
+      "fy": "2025-26",
+      "category": "tax_cess",
+      "description": "Health and Education Cess, applied on income tax after rebate, before surcharge.",
+      "value": 0.04,
+      "unit": "fraction_of_tax",
+      "applies_to": ["old_regime", "new_regime"],
+      "source": "Income Tax Act, Section 87A read with Finance Act"
+    },
+    {
+      "rule_id": "RED_FLAG_VARIABLE_PAY_PCT",
+      "fy": "2025-26",
+      "category": "red_flag_threshold",
+      "description": "Variable/bonus pay above this share of CTC is flagged as a significant at-risk portion of total compensation.",
+      "value": 0.30,
+      "unit": "fraction_of_ctc",
+      "applies_to": ["old_regime", "new_regime"],
+      "source": "internal heuristic"
+    },
+    {
+      "rule_id": "RED_FLAG_BASIC_PCT_MIN",
+      "fy": "2025-26",
+      "category": "red_flag_threshold",
+      "description": "Basic salary below this share of CTC is flagged, since PF, gratuity and HRA exemption all derive from Basic.",
+      "value": 0.30,
+      "unit": "fraction_of_ctc",
+      "applies_to": ["old_regime", "new_regime"],
+      "source": "internal heuristic"
+    },
+    {
+      "rule_id": "RED_FLAG_NOTICE_PERIOD_DAYS",
+      "fy": "2025-26",
+      "category": "red_flag_threshold",
+      "description": "Notice periods longer than this many days are flagged as unusually long.",
+      "value": 90,
+      "unit": "days",
+      "applies_to": ["old_regime", "new_regime"],
+      "source": "internal heuristic"
+    }
+  ]
+}
