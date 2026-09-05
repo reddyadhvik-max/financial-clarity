@@ -5,7 +5,7 @@ script is only needed if you want to regenerate or modify that fixture.
 Requires `reportlab` (a test-fixture-generation dependency only, not a
 runtime dependency of the parser — see requirements.txt).
 
-Run from the person4-data-parser/ directory:
+Run from the person4-data-parsing/ directory:
     python tests/generate_sample_pdf.py
 """
 from pathlib import Path

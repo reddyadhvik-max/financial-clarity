@@ -11,7 +11,7 @@ values to look at, rather than every field lining up perfectly.
 directly (real offer letters essentially never spell these out verbatim —
 they're derived figures) — that's realistic, not a gap in the generator.
 
-Run from the person4-data-parser/ directory:
+Run from the person4-data-parsing/ directory:
     python sample_offers/generate_samples.py
 """
 import random

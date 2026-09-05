@@ -10,7 +10,7 @@ another. See "Session-scoped storage" below.
 
 This is a standalone module inside the `financial-clarity` monorepo (its own
 `requirements.txt`, its own FastAPI service on its own port), separate from
-the main Offer Decoder backend in `../backend`. Named `person4-data-parser`
+the main Offer Decoder backend in `../backend`. Named `person4-data-parsing`
 on disk rather than the literal "person 4 (data parser)" — spaces and
 parentheses in a folder name cause friction with `python -m`, imports, and
 shell quoting on Windows, so it's spelled out here in the README instead.
@@ -143,7 +143,7 @@ data) — it is not something to silently add back.
 ## Running the service
 
 ```bash
-cd person4-data-parser
+cd person4-data-parsing
 python -m venv .venv && .venv\Scripts\activate     # Windows
 pip install -r requirements.txt
 uvicorn parser.api:app --reload --port 8100
@@ -165,7 +165,7 @@ Endpoints:
 ## Running the tests
 
 ```bash
-cd person4-data-parser
+cd person4-data-parsing
 pip install -r requirements.txt
 python -m pytest tests/ -v
 ```
