@@ -2,8 +2,11 @@
 
 A resilient, multi-layer parsing engine that extracts, normalizes, and
 validates compensation data (CTC breakdowns) from offer letters — raw text,
-structured PDFs, or scanned images — and stores the result locally for
-lookup, filtering, and multi-offer comparison.
+structured PDFs, or scanned images — and holds the result in a per-session,
+in-memory store for lookup, filtering, and multi-offer comparison.
+**Nothing is ever written to disk**: offer letters carry real compensation
+data, and data from one upload session must not survive — or leak into —
+another. See "Session-scoped storage" below.
 
 This is a standalone module inside the `financial-clarity` monorepo (its own
 `requirements.txt`, its own FastAPI service on its own port), separate from
@@ -105,13 +108,37 @@ be read directly by a person comparing two offers. Each offer's own
 was never found in this letter" stays distinguishable from "the field is
 zero."
 
-## Local storage (`storage.py`)
+## Session-scoped storage (`storage.py` + `sessions.py`)
 
-Every offer parsed through the API is saved to a local SQLite database at
-`data/offers.db` (created automatically, gitignored — the schema, not the
-data, is what's versioned). Supports listing with filters: by company name,
-CTC range, or "show me every offer still missing field X in category Y" —
-the checklist/filter capability the product needs for the comparison UI.
+Storage is still plain SQLite — no server, no extra dependency — but it is
+**native in-memory SQLite (`sqlite3.connect(":memory:")`), one connection per
+upload session, never a file on disk.** `sessions.py`'s `SessionStore` is an
+in-process registry mapping a `session_id` to its own private in-memory
+connection. A session's data exists only as long as that connection is open;
+it ends in exactly one of three ways, all of which permanently discard the
+data (there is no file left over to clean up, because there was never one):
+
+1. **Explicit close** — `DELETE /session` — call this when the user finishes
+   their upload/comparison flow.
+2. **Idle timeout** — 30 minutes of inactivity (`SESSION_IDLE_TIMEOUT_SECONDS`
+   in `sessions.py`) and the session is evicted automatically.
+3. **Process restart** — in-memory means in-memory; nothing survives the
+   service stopping, by construction.
+
+The API resolves sessions via an `X-Session-Id` header: omit it and a new
+session is created and returned in the response header; pass it back on
+later requests to keep working in the same session. Two different sessions
+can never see each other's offers — `list_offers`/`get_offer` only ever see
+rows in the connection they were given, and there's no shared table for a
+different session's connection to accidentally query. Supports listing with
+filters within a session: by company name, CTC range, or "show me every
+offer still missing field X in category Y" — the checklist/filter capability
+the product needs for the comparison UI.
+
+**Not for durable retention.** If the team later wants offers to survive a
+server restart or be shared across sessions, that's a deliberate product
+decision to revisit (and would need explicit user consent to retain that
+data) — it is not something to silently add back.
 
 ## Running the service
 
@@ -126,12 +153,14 @@ Endpoints:
 
 | Method | Path | What it does |
 |---|---|---|
-| GET | `/checklist` | Categorized list of every field this parser looks for, plus its known aliases — for a frontend "found vs. still need to check" UI. |
-| POST | `/parse/text` | `{"text": "...", "source_filename": "..."}` → parses, saves, returns the full result with an `offer_id`. |
-| POST | `/parse/pdf` | Multipart file upload of a `.pdf` → same result shape. |
-| GET | `/offers` | List stored offers. Filters: `company_name`, `min_ctc`, `max_ctc`, `missing_field` (+ optional `category`). |
-| GET | `/offers/{offer_id}` | Fetch one stored offer's full parsed result. |
-| POST | `/compare` | `{"offer_id_a", "offer_id_b", "label_a"?, "label_b"?}` → field-by-field comparison with `"NA"` for one-sided fields. |
+| GET | `/checklist` | Categorized list of every field this parser looks for, plus its known aliases — for a frontend "found vs. still need to check" UI. Not session-scoped (static schema data). |
+| POST | `/session` | Explicitly starts a fresh session (optional — any other endpoint auto-creates one if you don't pass `X-Session-Id`). Returns `{"session_id": "..."}`. |
+| DELETE | `/session` | Ends the session named by the `X-Session-Id` header immediately, discarding every offer parsed in it. |
+| POST | `/parse/text` | `{"text": "...", "source_filename": "..."}` → parses, saves into the current session, returns the full result with an `offer_id` + `session_id`. |
+| POST | `/parse/pdf` | Multipart file upload of a `.pdf` → same result shape. The uploaded PDF itself is written to a temp file only long enough to parse it, then deleted. |
+| GET | `/offers` | List offers in the current session. Filters: `company_name`, `min_ctc`, `max_ctc`, `missing_field` (+ optional `category`). |
+| GET | `/offers/{offer_id}` | Fetch one offer's full parsed result, if it exists in the current session. |
+| POST | `/compare` | `{"offer_id_a", "offer_id_b", "label_a"?, "label_b"?}` → field-by-field comparison with `"NA"` for one-sided fields. Both offers must be in the current session. |
 
 ## Running the tests
 
@@ -141,7 +170,7 @@ pip install -r requirements.txt
 python -m pytest tests/ -v
 ```
 
-31 tests, all passing as of this writing — including several **regression
+43 tests, all passing as of this writing — including several **regression
 tests for real bugs caught while building this** (word-boundary matching so
 "DA" doesn't match inside "Date"; a generic "incentive" alias that used to
 misattribute an equity grant as sales commission; a table-column-header
@@ -182,3 +211,7 @@ in the `warnings` list) if OCR isn't available rather than crashing.
   thresholds, ₹10L "high value" cutoff) are reasonable defaults, not
   regulatory constants — tune them in `confidence.py`/`redflags.py` if the
   team wants different sensitivity.
+- The session store is a single process's in-memory dict — it isn't shared
+  across multiple `uvicorn` worker processes. Run this service with one
+  worker; a session's data lives only in whichever process created it, by
+  design (see `sessions.py`).
