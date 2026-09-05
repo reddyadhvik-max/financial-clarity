@@ -190,6 +190,47 @@ html, body {
   .page { padding: 1.75rem 1.5rem 2rem; }
 }
 
+/* ---------- sample offers ---------- */
+
+.sample-offers {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 1.2rem;
+}
+
+.sample-offers-label {
+  font-size: 0.8rem;
+  color: var(--ink-soft);
+  margin-right: 0.2rem;
+}
+
+.sample-chip {
+  border: 1px solid var(--glass-border);
+  background: var(--glass-bg);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  color: var(--ink);
+  font-family: var(--sans);
+  font-size: 0.8rem;
+  padding: 0.35rem 0.8rem;
+  border-radius: 999px;
+  cursor: pointer;
+  box-shadow: var(--neu-raised-sm);
+  transition: transform 180ms var(--ease-soft), box-shadow 180ms var(--ease-soft);
+}
+
+.sample-chip:hover {
+  transform: translateY(-1px);
+  box-shadow: var(--neu-raised-sm), 0 6px 16px rgba(24, 154, 108, 0.18);
+}
+
+.sample-chip:active {
+  transform: translateY(0) scale(0.98);
+  box-shadow: var(--neu-inset-sm);
+}
+
 /* ---------- form rows ---------- */
 
 #offer-form .row {
@@ -226,6 +267,20 @@ html, body {
   width: 11rem;
 }
 
+.field--wide { width: 14rem; }
+
+.city-classification {
+  margin: -0.4rem 0 0.7rem;
+  padding-bottom: 0.6rem;
+  border-bottom: 1px solid var(--rule);
+  font-size: 0.8rem;
+  color: var(--ink-soft);
+  min-height: 1.1rem;
+  text-align: right;
+}
+
+.city-classification.is-metro { color: var(--accent); }
+
 .field .rupee {
   color: var(--ink-soft);
   padding-right: 0.3rem;
@@ -248,6 +303,8 @@ html, body {
 }
 
 .field select { text-align: left; padding-right: 0.4rem; }
+
+#city_name { text-align: left; }
 
 .field input::placeholder { color: rgba(22, 36, 28, 0.4); }
 
@@ -586,6 +643,112 @@ tr.rule-detail .rule-source {
 
 .flags li.severity-critical::before { color: var(--critical); }
 .flags li.severity-critical { color: var(--critical); }
+
+/* ---------- budget: salary -> deductions -> essentials -> spendable ---- */
+
+.budget {
+  margin-top: 1.5rem;
+  padding-top: 1rem;
+  border-top: 1px dashed var(--rule-strong);
+}
+
+.budget h3 {
+  font-family: var(--serif);
+  font-weight: 500;
+  font-size: 1.05rem;
+  margin: 0 0 0.3rem;
+}
+
+.budget-intro {
+  margin: 0 0 0.8rem;
+  font-size: 0.85rem;
+  color: var(--ink-soft);
+}
+
+.budget-inputs .row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.55rem 0;
+  border-bottom: 1px dashed var(--rule);
+}
+
+.budget-inputs .row label {
+  font-size: 0.88rem;
+  flex: 1 1 auto;
+}
+
+.budget-flow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.6rem;
+  margin-top: 1.2rem;
+}
+
+.flow-step {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  padding: 0.7rem 1rem;
+  border-radius: 12px;
+  background: var(--neu-base);
+  box-shadow: var(--neu-raised-sm);
+  min-width: 8.5rem;
+}
+
+.flow-label {
+  font-size: 0.72rem;
+  color: var(--ink-soft);
+}
+
+.flow-amount {
+  font-family: var(--serif);
+  font-weight: 500;
+  font-size: 1.15rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.flow-step--result {
+  background: linear-gradient(135deg, var(--accent-bright), var(--accent) 60%, #0F7A55);
+  box-shadow: var(--neu-raised-sm), 0 10px 24px rgba(24, 154, 108, 0.28);
+}
+
+.flow-step--result .flow-label { color: rgba(8, 20, 15, 0.7); }
+.flow-step--result .flow-amount { color: var(--accent-ink); }
+
+.flow-step--negative {
+  background: linear-gradient(135deg, #E58A7E, var(--critical) 70%);
+}
+
+.flow-step--negative .flow-label { color: rgba(20, 8, 8, 0.7); }
+.flow-step--negative .flow-amount { color: #2B0E0B; }
+
+.flow-arrow {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.1rem;
+  color: var(--ink-soft);
+  font-size: 1.1rem;
+}
+
+.flow-arrow-note {
+  font-size: 0.68rem;
+  white-space: nowrap;
+}
+
+.budget-warning {
+  margin: 0.8rem 0 0;
+  font-size: 0.85rem;
+  color: var(--critical);
+}
+
+@media (max-width: 34rem) {
+  .budget-flow { flex-direction: column; align-items: stretch; }
+  .flow-arrow { flex-direction: row; justify-content: center; }
+}
 
 /* ---------- scope note ---------- */
 

@@ -26,6 +26,13 @@
   <section class="page page--input" aria-labelledby="input-heading">
     <h2 id="input-heading">Your offer</h2>
 
+    <div class="sample-offers" role="group" aria-label="Load a sample offer">
+      <span class="sample-offers-label">Try a sample</span>
+      <button type="button" class="sample-chip" data-sample="clean">Clean offer</button>
+      <button type="button" class="sample-chip" data-sample="redflags">Red-flag offer</button>
+      <button type="button" class="sample-chip" data-sample="senior">Senior, old regime</button>
+    </div>
+
     <form id="offer-form" novalidate>
       <div class="row">
         <label for="basic">Basic, per year</label>
@@ -48,14 +55,28 @@
         <div class="field"><span class="rupee">₹</span><input type="number" id="employer_pf" name="employer_pf" min="0" step="1" placeholder="not stated"></div>
       </div>
       <div class="row">
-        <label for="city">City</label>
-        <div class="field">
-          <select id="city" name="is_metro">
-            <option value="true">Metro (Mumbai, Delhi, Kolkata, Chennai)</option>
-            <option value="false">Non-metro</option>
-          </select>
+        <label for="city_name">City you live/work in</label>
+        <div class="field field--wide">
+          <input type="text" id="city_name" name="city_name" list="city-list" autocomplete="off" placeholder="e.g. Mumbai, Pune, Bengaluru">
         </div>
       </div>
+      <p class="city-classification" id="city-classification" aria-live="polite"></p>
+      <datalist id="city-list">
+        <option value="Mumbai"></option>
+        <option value="Delhi"></option>
+        <option value="Kolkata"></option>
+        <option value="Chennai"></option>
+        <option value="Bengaluru"></option>
+        <option value="Hyderabad"></option>
+        <option value="Pune"></option>
+        <option value="Ahmedabad"></option>
+        <option value="Gurugram"></option>
+        <option value="Noida"></option>
+        <option value="Jaipur"></option>
+        <option value="Lucknow"></option>
+        <option value="Chandigarh"></option>
+        <option value="Kochi"></option>
+      </datalist>
 
       <fieldset class="regime-choice">
         <legend>Tax regime</legend>
@@ -113,6 +134,62 @@
       <div class="flags reveal" id="flags" hidden>
         <h3>Worth a second look</h3>
         <ul id="flags-list"></ul>
+      </div>
+
+      <div class="budget reveal" id="budget" hidden>
+        <h3>Your monthly spendable money</h3>
+        <p class="budget-intro">Recurring costs, per month — fill in what applies, leave the rest at ₹0.</p>
+
+        <div class="budget-inputs" id="budget-inputs">
+          <div class="row">
+            <label for="exp_rent">Rent</label>
+            <div class="field"><span class="rupee">₹</span><input type="number" id="exp_rent" name="exp_rent" min="0" step="1" placeholder="0"></div>
+          </div>
+          <div class="row">
+            <label for="exp_emi">EMI (loans)</label>
+            <div class="field"><span class="rupee">₹</span><input type="number" id="exp_emi" name="exp_emi" min="0" step="1" placeholder="0"></div>
+          </div>
+          <div class="row">
+            <label for="exp_insurance">Insurance premiums</label>
+            <div class="field"><span class="rupee">₹</span><input type="number" id="exp_insurance" name="exp_insurance" min="0" step="1" placeholder="0"></div>
+          </div>
+          <div class="row">
+            <label for="exp_food">Food & groceries</label>
+            <div class="field"><span class="rupee">₹</span><input type="number" id="exp_food" name="exp_food" min="0" step="1" placeholder="0"></div>
+          </div>
+          <div class="row">
+            <label for="exp_transport">Transport</label>
+            <div class="field"><span class="rupee">₹</span><input type="number" id="exp_transport" name="exp_transport" min="0" step="1" placeholder="0"></div>
+          </div>
+          <div class="row">
+            <label for="exp_other">Other recurring costs</label>
+            <div class="field"><span class="rupee">₹</span><input type="number" id="exp_other" name="exp_other" min="0" step="1" placeholder="0"></div>
+          </div>
+        </div>
+
+        <div class="budget-flow" id="budget-flow" aria-label="Salary to spendable money flow">
+          <div class="flow-step">
+            <span class="flow-label">Salary, per month</span>
+            <span class="flow-amount" id="flow-salary">₹0</span>
+          </div>
+          <div class="flow-arrow" aria-hidden="true">
+            <span>→</span>
+            <span class="flow-arrow-note" id="flow-deductions-note">− deductions ₹0</span>
+          </div>
+          <div class="flow-step">
+            <span class="flow-label">In hand, per month</span>
+            <span class="flow-amount" id="flow-in-hand">₹0</span>
+          </div>
+          <div class="flow-arrow" aria-hidden="true">
+            <span>→</span>
+            <span class="flow-arrow-note" id="flow-essentials-note">− essentials ₹0</span>
+          </div>
+          <div class="flow-step flow-step--result" id="flow-spendable-step">
+            <span class="flow-label">Spendable, per month</span>
+            <span class="flow-amount" id="flow-spendable">₹0</span>
+          </div>
+        </div>
+        <p class="budget-warning" id="budget-warning" hidden></p>
       </div>
     </div>
 

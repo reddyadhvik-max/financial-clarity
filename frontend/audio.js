@@ -54,7 +54,7 @@ const UISound = (() => {
 
 // Delegated so it also covers .rule-chip buttons, which are created fresh
 // after every breakdown render rather than existing at page load.
-const SOUND_TARGETS = ".cta, .rule-chip, .regime-choice .pill, .addendum summary, .scope-note summary";
+const SOUND_TARGETS = ".cta, .rule-chip, .regime-choice .pill, .addendum summary, .scope-note summary, .sample-chip";
 
 document.addEventListener(
   "mouseenter",

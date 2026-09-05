@@ -71,6 +71,43 @@ function requiredFieldsPresent() {
   input.addEventListener("input", () => input.classList.remove("field-missing"));
 });
 
+// --- city -> metro/non-metro classification ------------------------------
+// The HRA rule only cares about metro vs. non-metro, but making someone
+// pick that label themselves means they have to already know the rule.
+// Instead they type their actual city and we classify it, same "show your
+// work" principle as the rule-lookup chips: the classification is always
+// visible, never a silent guess baked into a hidden field.
+
+const METRO_CITIES = new Set([
+  "mumbai", "bombay",
+  "delhi", "new delhi", "delhi ncr",
+  "kolkata", "calcutta",
+  "chennai", "madras",
+]);
+
+function classifyCity(cityName) {
+  return METRO_CITIES.has((cityName || "").trim().toLowerCase());
+}
+
+const cityNameInput = document.getElementById("city_name");
+const cityClassificationEl = document.getElementById("city-classification");
+
+function updateCityHint() {
+  const value = cityNameInput.value.trim();
+  if (!value) {
+    cityClassificationEl.textContent = "";
+    cityClassificationEl.classList.remove("is-metro");
+    return;
+  }
+  const isMetro = classifyCity(value);
+  cityClassificationEl.textContent = isMetro
+    ? "→ Metro city: the 50% HRA exemption limb applies."
+    : "→ Non-metro: the 40% HRA exemption limb applies.";
+  cityClassificationEl.classList.toggle("is-metro", isMetro);
+}
+
+cityNameInput.addEventListener("input", updateCityHint);
+
 // --- regime toggle: shows/hides old-regime fields, recomputes live ------
 
 form.querySelectorAll('input[name="regime"]').forEach((radio) => {
@@ -109,7 +146,7 @@ function buildPayload() {
     special_allowance: num("special_allowance") ?? 0,
     bonus: num("bonus") ?? 0,
     employer_pf: num("employer_pf"),
-    is_metro: data.get("is_metro") === "true",
+    is_metro: classifyCity(data.get("city_name")),
     notice_period_days: num("notice_period_days"),
     gratuity_clause_present: data.get("gratuity_clause_present") === "on",
     has_service_bond: data.get("has_service_bond") === "on",
@@ -154,6 +191,9 @@ function renderBreakdown(payload) {
   previousRowAmounts = nextAmounts;
 
   renderFlags(payload.red_flags || []);
+
+  latestBreakdown = b;
+  updateBudget();
 
   const firstResult = !hasResult;
   emptyState.hidden = true;
@@ -373,3 +413,117 @@ async function loadScope() {
 }
 
 loadScope();
+
+// --- sample offers: pre-built payloads for demo reliability -------------
+// Field keys match the offer-form's input names/ids directly, so loading a
+// sample is just "set these form fields, then submit" — no separate parsing.
+
+const SAMPLE_OFFERS = {
+  clean: {
+    regime: "new",
+    fields: {
+      basic: 400000, hra: 200000, special_allowance: 150000, bonus: 40000,
+      employer_pf: 48000, city_name: "Mumbai", notice_period_days: 60,
+      gratuity_clause_present: true, has_service_bond: false, joining_bonus_has_clawback: false,
+    },
+  },
+  redflags: {
+    regime: "new",
+    fields: {
+      basic: 200000, hra: 100000, special_allowance: 200000, bonus: 500000,
+      employer_pf: "", city_name: "Mumbai", notice_period_days: 120,
+      gratuity_clause_present: false, has_service_bond: true, joining_bonus_has_clawback: true,
+    },
+  },
+  senior: {
+    regime: "old",
+    fields: {
+      basic: 900000, hra: 450000, special_allowance: 300000, bonus: 150000,
+      employer_pf: 108000, city_name: "Mumbai", rent_paid: 360000, ded_80c: 150000, ded_80d: 25000,
+      notice_period_days: 90, gratuity_clause_present: true, has_service_bond: false,
+      joining_bonus_has_clawback: false,
+    },
+  },
+};
+
+function loadSample(key) {
+  const sample = SAMPLE_OFFERS[key];
+  if (!sample) return;
+
+  form.reset(); // clear any stale values (e.g. rent_paid) left from a previously loaded sample
+  form.querySelector(`input[name="regime"][value="${sample.regime}"]`).checked = true;
+  const isOld = sample.regime === "old";
+  oldOnlyRows.forEach((row) => { row.hidden = !isOld; });
+
+  Object.entries(sample.fields).forEach(([name, value]) => {
+    const el = form.elements.namedItem(name);
+    if (!el) return;
+    if (el.type === "checkbox") el.checked = Boolean(value);
+    else el.value = value;
+  });
+  updateCityHint();
+
+  form.basic.classList.remove("field-missing");
+  form.hra.classList.remove("field-missing");
+  runBreakdown({ silent: false });
+}
+
+document.querySelectorAll(".sample-chip").forEach((btn) => {
+  btn.addEventListener("click", () => loadSample(btn.dataset.sample));
+});
+
+// --- budgeting: salary -> deductions -> essentials -> spendable ----------
+// Essentials are plain user-entered recurring costs, not tax/PF rule
+// outputs, so subtracting them client-side doesn't break the "backend owns
+// every rupee" rule — there's no rule_id to trace here, just arithmetic on
+// numbers the user typed in.
+
+const budgetBlock = document.getElementById("budget");
+const budgetInputs = document.querySelectorAll("#budget-inputs input");
+const budgetWarning = document.getElementById("budget-warning");
+const flowSalaryEl = document.getElementById("flow-salary");
+const flowInHandEl = document.getElementById("flow-in-hand");
+const flowSpendableEl = document.getElementById("flow-spendable");
+const flowSpendableStep = document.getElementById("flow-spendable-step");
+const flowDeductionsNote = document.getElementById("flow-deductions-note");
+const flowEssentialsNote = document.getElementById("flow-essentials-note");
+
+let latestBreakdown = null;
+
+function essentialsTotal() {
+  let total = 0;
+  budgetInputs.forEach((input) => { total += Number(input.value) || 0; });
+  return total;
+}
+
+function updateBudget() {
+  if (!latestBreakdown) {
+    budgetBlock.hidden = true;
+    return;
+  }
+  const b = latestBreakdown;
+  const salaryMonthly = b.gross_salary_annual / 12;
+  const deductionsMonthly = salaryMonthly - b.in_hand_monthly;
+  const essentials = essentialsTotal();
+  const spendable = b.in_hand_monthly - essentials;
+
+  flowSalaryEl.textContent = formatInr(salaryMonthly);
+  flowDeductionsNote.textContent = `− deductions ${formatInr(deductionsMonthly)}`;
+  flowInHandEl.textContent = formatInr(b.in_hand_monthly);
+  flowEssentialsNote.textContent = `− essentials ${formatInr(essentials)}`;
+  flowSpendableEl.textContent = formatInr(spendable);
+
+  const overspending = spendable < 0;
+  flowSpendableStep.classList.toggle("flow-step--negative", overspending);
+  budgetWarning.hidden = !overspending;
+  if (overspending) {
+    budgetWarning.textContent = `These recurring costs exceed your in-hand pay by ${formatInr(Math.abs(spendable))}/month.`;
+  }
+
+  budgetBlock.hidden = false;
+  revealWhenVisible(budgetBlock);
+}
+
+budgetInputs.forEach((input) => {
+  input.addEventListener("input", updateBudget);
+});

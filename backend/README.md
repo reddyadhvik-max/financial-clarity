@@ -7,6 +7,10 @@ plain-language explanations.
 
 ## Layout
 
+- `data/sample_offers.json` — the 3 canonical demo offers (owned by Person
+  5), each with expected response values. Run `python
+  ../scripts/e2e_smoke.py` against a live server to verify all three still
+  round-trip correctly — rerun this before every demo checkpoint.
 - `data/rules.json` — versioned rule data (rate, cap, slab, threshold),
   keyed by `(rule_id, fy)`. Never hardcode a number in `app/engine.py`;
   add or look up a rule here instead.
