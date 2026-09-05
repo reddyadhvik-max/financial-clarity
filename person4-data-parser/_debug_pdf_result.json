@@ -1,0 +1,207 @@
+{
+  "metadata": {
+    "company_name": "Delta Analytics Pvt Ltd",
+    "employee_name": "Meera Iyer",
+    "designation": "Machine Learning Engineer",
+    "joining_date": null
+  },
+  "fields": {
+    "top_line": {
+      "total_ctc": {
+        "value": 2200000.0,
+        "confidence_tier": "found",
+        "evidence": "Total Compensation (CTC) for the year will be Rs. 22,00,000"
+      },
+      "total_gross_pay": {
+        "value": 2038646.0,
+        "confidence_tier": "estimated",
+        "evidence": "derived: total_ctc - (employer_pf + gratuity + superannuation_nps)"
+      },
+      "target_net_pay": {
+        "value": null,
+        "confidence_tier": "missing",
+        "evidence": null
+      }
+    },
+    "fixed": {
+      "basic_pay": {
+        "value": 960000.0,
+        "confidence_tier": "found",
+        "evidence": "table row: 'Basic Pay' (annual column)"
+      },
+      "hra": {
+        "value": 480000.0,
+        "confidence_tier": "found",
+        "evidence": "table row: 'House Rent Allowance' (annual column)"
+      },
+      "special_allowance": {
+        "value": 360000.0,
+        "confidence_tier": "found",
+        "evidence": "table row: 'Special Allowance' (annual column)"
+      },
+      "lta": {
+        "value": null,
+        "confidence_tier": "missing",
+        "evidence": null
+      },
+      "da": {
+        "value": null,
+        "confidence_tier": "missing",
+        "evidence": null
+      }
+    },
+    "retirals": {
+      "employer_pf": {
+        "value": 115200.0,
+        "confidence_tier": "found",
+        "evidence": "table row: 'Employer PF' (annual column)"
+      },
+      "gratuity": {
+        "value": 46154.0,
+        "confidence_tier": "found",
+        "evidence": "table row: 'Gratuity' (annual column)"
+      },
+      "superannuation_nps": {
+        "value": null,
+        "confidence_tier": "missing",
+        "evidence": null
+      }
+    },
+    "variable": {
+      "target_bonus": {
+        "value": null,
+        "confidence_tier": "missing",
+        "evidence": null
+      },
+      "variable_pay_frequency": {
+        "value": "Monthly",
+        "confidence_tier": "found",
+        "evidence": "Monthly"
+      },
+      "sales_commission": {
+        "value": null,
+        "confidence_tier": "missing",
+        "evidence": null
+      }
+    },
+    "one_time": {
+      "joining_bonus": {
+        "value": 150000.0,
+        "confidence_tier": "found",
+        "evidence": "Joining Bonus of Rs. 1,50,000, "
+      },
+      "joining_bonus_clawback_months": {
+        "value": 6,
+        "confidence_tier": "found",
+        "evidence": "Clawback Period of 6\nmonths"
+      },
+      "relocation_allowance": {
+        "value": null,
+        "confidence_tier": "missing",
+        "evidence": null
+      },
+      "retention_bonus": {
+        "value": null,
+        "confidence_tier": "missing",
+        "evidence": null
+      },
+      "equity_type": {
+        "value": null,
+        "confidence_tier": "missing",
+        "evidence": null
+      },
+      "equity_grant_value": {
+        "value": null,
+        "confidence_tier": "missing",
+        "evidence": null
+      },
+      "equity_unit_count": {
+        "value": null,
+        "confidence_tier": "missing",
+        "evidence": null
+      },
+      "equity_vesting_schedule": {
+        "value": null,
+        "confidence_tier": "missing",
+        "evidence": null
+      },
+      "equity_cliff_months": {
+        "value": null,
+        "confidence_tier": "missing",
+        "evidence": null
+      }
+    },
+    "deductions": {
+      "health_insurance_premium": {
+        "value": null,
+        "confidence_tier": "missing",
+        "evidence": null
+      },
+      "food_meal_allowance": {
+        "value": null,
+        "confidence_tier": "missing",
+        "evidence": null
+      },
+      "internet_phone_reimbursement": {
+        "value": null,
+        "confidence_tier": "missing",
+        "evidence": null
+      },
+      "cab_transport_deduction": {
+        "value": null,
+        "confidence_tier": "missing",
+        "evidence": null
+      }
+    }
+  },
+  "derived": {
+    "top_line_total": {
+      "value": 4238646.0,
+      "confidence_tier": "estimated",
+      "evidence": "sum of top_line category fields"
+    },
+    "fixed_total": {
+      "value": 1800000.0,
+      "confidence_tier": "estimated",
+      "evidence": "sum of fixed category fields"
+    },
+    "retirals_total": {
+      "value": 161354.0,
+      "confidence_tier": "estimated",
+      "evidence": "sum of retirals category fields"
+    },
+    "variable_total": {
+      "value": null,
+      "confidence_tier": "missing",
+      "evidence": null
+    },
+    "one_time_total": {
+      "value": 150000.0,
+      "confidence_tier": "estimated",
+      "evidence": "sum of one_time category fields"
+    },
+    "deductions_total": {
+      "value": null,
+      "confidence_tier": "missing",
+      "evidence": null
+    }
+  },
+  "checksum": {
+    "checked": true,
+    "total_ctc": 2200000.0,
+    "component_sum": 1961354.0,
+    "difference": -238646.0,
+    "difference_pct": 10.85,
+    "within_tolerance": false
+  },
+  "red_flags": [
+    {
+      "flag_id": "CTC_CHECKSUM_MISMATCH",
+      "severity": "info",
+      "field": "total_ctc",
+      "message": "Extracted components sum to ₹1,961,354, 10.85% off the stated Total CTC of ₹2,200,000 — the letter may bundle a component this parser doesn't itemize, or a field may have been mis-extracted. Worth a manual check."
+    }
+  ],
+  "used_ocr": false,
+  "warnings": []
+}
