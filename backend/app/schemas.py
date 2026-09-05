@@ -35,45 +35,29 @@ class CTCBreakup(BaseModel):
     ctc_total: float | None = None
     one_time_components: dict[str, float] = Field(default_factory=dict)
 
-    # --- Dearness Allowance: part of the statutory "Basic + DA" base for
-    # PF/gratuity/HRA, not just an extra allowance ---
     dearness_allowance: float = 0
 
-    # --- Leave Travel Allowance: cash received is taxable by default;
-    # `lta_exemption_claimed` (<= lta_received) is exempt under the old
-    # regime only. The twice-in-a-4-year-block restriction isn't modelled.
     lta_received: float = 0
     lta_exemption_claimed: float = 0
 
-    # --- Superannuation / NPS: employer contribution, deductible under
-    # Section 80CCD(2) in BOTH regimes, capped as a % of Basic+DA. Paid to
-    # the NPS fund, not to the employee, so it's a CTC cost, not gross pay.
     employer_nps: float | None = Field(None, validation_alias=AliasChoices("employer_nps", "superannuation",
                                                                             "employerNPS", "employerNps"))
 
-    # --- Employer-paid group health insurance premium: a CTC cost, not
-    # cash paid to the employee, so excluded from gross salary/take-home.
     health_insurance_premium: float = 0
 
-    # --- Company transport/cab facility cost recovered from the employee's
-    # pay. A cash deduction like professional tax, but not a tax rule.
     transport_deduction: float = 0
 
-    # --- Additional variable-pay components, taxed the same as `bonus` ---
     retention_bonus: float = 0
     sales_commission: float = Field(0, validation_alias=AliasChoices("sales_commission", "salesCommission",
                                                                       "incentives"))
     variable_pay_frequency: Literal["monthly", "quarterly", "annually"] | None = None
 
-    # --- Equity: accepted and echoed back as-is. NOT valued, vested, or
-    # taxed by this engine — see completeness-scope's not_covered list.
     equity_type: Literal["ESOP", "RSU", "ESPP"] | None = None
     equity_grant_value: float | None = None
     equity_unit_count: float | None = None
     equity_vesting_schedule: str | None = None
     equity_cliff_period_months: float | None = None
 
-    # red-flag-only fields, ignored by compute_in_hand
     gratuity_clause_present: bool = True
     notice_period_days: float | None = None
     has_service_bond: bool = False

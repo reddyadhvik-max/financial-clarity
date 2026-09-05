@@ -30,9 +30,6 @@ from app.validation import validate_ctc_breakup
 
 app = FastAPI(title="Offer Decoder API", version="0.1.0")
 
-# The frontend is a static page (opened via file:// or a plain static server),
-# so it has no fixed origin the backend can allowlist. Open CORS here since
-# this API carries no auth/session state to protect against cross-origin misuse.
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],

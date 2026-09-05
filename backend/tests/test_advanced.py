@@ -41,7 +41,6 @@ def test_classify_one_time_components_excluded_from_recurring_total():
     one_time = next(b for b in classification["buckets"] if b["bucket"] == "one_time")
     assert one_time["total"] == 150_000.0
     assert classification["one_time_total"] == 150_000.0
-    # adding one-time components must not change the recurring CTC figure
     baseline = engine.classify_compensation_components(FULL_SCENARIO_CTC, regime="new")
     assert classification["recurring_ctc_total"] == baseline["recurring_ctc_total"]
 
@@ -63,21 +62,15 @@ def test_waterfall_running_balance_after_all_steps_matches_in_hand_annual():
     annual_step = next(s for s in waterfall["steps"] if s["label"] == "Annual In-Hand")
     assert annual_step["running_balance"] == in_hand["in_hand_annual"] == 1_128_000.0
 
-    # every subtracted step must carry the same rule_id the underlying
-    # deduction/employer_side entry has, so the audit-trail click-through works
     pf_step = next(s for s in waterfall["steps"] if s["label"] == "Employee PF (EPF)")
     assert pf_step["rule_id"] == "PF_EMPLOYEE_RATE"
 
 
 def test_quality_score_hand_verified_full_scenario():
     result = engine.compute_offer_quality_score(FULL_SCENARIO_CTC, regime="new")
-    # fixed_ratio (~84.6%) and take_home_ratio (~86.7%) both exceed their
-    # benchmarks (70%, 65%) and clamp to 100; benefits are all present (PF,
-    # gratuity, ESI correctly not-applicable) for a full 100.
     assert result["sub_scores"]["fixed_ratio"]["score"] == 100.0
     assert result["sub_scores"]["take_home_ratio"]["score"] == 100.0
     assert result["sub_scores"]["benefits"]["score"] == 100.0
-    # variable pay is ~7.7% of CTC vs. a 30% "at risk" threshold
     assert result["sub_scores"]["variable_dependence"]["score"] == pytest.approx(74.38, abs=0.01)
     assert result["overall_score"] == 94
 
@@ -124,10 +117,6 @@ def test_compare_offers_best_for_cashflow_picks_higher_monthly_in_hand():
     assert result["diff"]["in_hand_monthly"] > 0
 
 
-# ---------------------------------------------------------------------------
-# compute_epf_gratuity_timeline
-# ---------------------------------------------------------------------------
-
 def test_gratuity_vests_exactly_at_five_years():
     result = engine.compute_epf_gratuity_timeline("2019-06-15", as_of_date="2024-06-15")
     assert result["gratuity"]["vested"] is True
@@ -138,7 +127,7 @@ def test_gratuity_vests_exactly_at_five_years():
 def test_gratuity_not_vested_before_five_years():
     result = engine.compute_epf_gratuity_timeline("2019-06-15", as_of_date="2023-06-15")
     assert result["gratuity"]["vested"] is False
-    assert result["gratuity"]["days_to_vesting"] == 366  # spans the Feb 29, 2024 leap day
+    assert result["gratuity"]["days_to_vesting"] == 366
 
 
 def test_gratuity_forfeited_on_early_separation():
@@ -175,10 +164,6 @@ def test_timeline_rejects_malformed_date():
         engine.compute_epf_gratuity_timeline("15-06-2019")
 
 
-# ---------------------------------------------------------------------------
-# camelCase input compatibility (team schema uses specialAllowance/employerPF/variablePay)
-# ---------------------------------------------------------------------------
-
 def test_schema_accepts_camelcase_field_names():
     from app.schemas import CTCBreakup
 
@@ -203,17 +188,12 @@ def test_schema_still_accepts_snake_case_field_names():
     assert parsed.employer_pf == 72_000
 
 
-# ---------------------------------------------------------------------------
-# Extended CTC fields: DA, LTA, employer NPS, health insurance, transport
-# deduction, retention bonus / sales commission, equity passthrough
-# ---------------------------------------------------------------------------
-
 def test_dearness_allowance_included_in_pf_and_gratuity_base():
     ctc = {"basic": 600_000, "hra": 300_000, "dearness_allowance": 200_000, "pf_on_full_basic": True}
     result = engine.compute_in_hand(ctc, regime="new")
     pf = next(d for d in result["deductions"] if d["name"] == "Employee PF (EPF)")
-    assert pf["amount"] == 96_000.0  # 12% of (600000 + 200000), not just Basic
-    assert result["gross_salary_annual"] == 1_100_000.0  # Basic + DA + HRA, DA is cash paid to the employee
+    assert pf["amount"] == 96_000.0
+    assert result["gross_salary_annual"] == 1_100_000.0
     assert result["employer_side"]["gratuity_provision"]["amount"] == pytest.approx(38_461.54, abs=0.01)
 
 
@@ -222,17 +202,16 @@ def test_lta_exemption_reduces_taxable_income_old_regime_only():
     old = engine.compute_in_hand(ctc, regime="old")
     new = engine.compute_in_hand(ctc, regime="new")
 
-    assert old["taxable_income"] == 860_000.0  # 950000 gross - 50000 std ded - 40000 LTA exemption
+    assert old["taxable_income"] == 860_000.0
     assert old["lta_exemption_amount"] == 40_000.0
-    assert new["lta_exemption_amount"] == 0.0  # not available under the new regime
-    # LTA received is still cash paid to the employee under both regimes
+    assert new["lta_exemption_amount"] == 0.0
     assert old["gross_salary_annual"] == 950_000.0 == new["gross_salary_annual"]
 
 
 def test_lta_exemption_claimed_is_capped_at_amount_received():
     ctc = {"basic": 600_000, "hra": 300_000, "lta_received": 20_000, "lta_exemption_claimed": 999_000}
     result = engine.compute_in_hand(ctc, regime="old")
-    assert result["lta_exemption_amount"] == 20_000.0  # capped, not the wildly overstated claim
+    assert result["lta_exemption_amount"] == 20_000.0
 
 
 def test_employer_nps_deductible_under_both_regimes():
@@ -240,20 +219,19 @@ def test_employer_nps_deductible_under_both_regimes():
     old = engine.compute_in_hand(ctc, regime="old")
     new = engine.compute_in_hand(ctc, regime="new")
 
-    assert new["taxable_income"] == 1_145_000.0  # 1300000 gross - 75000 std ded - 80000 NPS deduction
+    assert new["taxable_income"] == 1_145_000.0
     assert new["nps_deduction_amount"] == 80_000.0
-    assert old["nps_deduction_amount"] == 80_000.0  # available under old regime too, unlike 80C/80D
+    assert old["nps_deduction_amount"] == 80_000.0
     assert new["employer_side"]["employer_nps"]["amount"] == 80_000.0
     assert new["employer_side"]["employer_nps"]["rule_id"] == "NPS_80CCD2_CAP_PCT"
-    # employer_nps is a CTC cost, never part of gross cash salary
     assert new["gross_salary_annual"] == 1_300_000.0
 
 
 def test_employer_nps_deduction_capped_at_10pct_of_basic_but_ctc_shows_full_contribution():
-    ctc = {"basic": 1_000_000, "hra": 300_000, "employer_nps": 150_000}  # 15% > 10% cap
+    ctc = {"basic": 1_000_000, "hra": 300_000, "employer_nps": 150_000}
     result = engine.compute_in_hand(ctc, regime="new")
-    assert result["nps_deduction_amount"] == 100_000.0  # capped at 10% of Basic+DA
-    assert result["employer_side"]["employer_nps"]["amount"] == 150_000.0  # full contribution still costs the employer
+    assert result["nps_deduction_amount"] == 100_000.0
+    assert result["employer_side"]["employer_nps"]["amount"] == 150_000.0
 
 
 def test_health_insurance_and_transport_deduction():
@@ -263,19 +241,18 @@ def test_health_insurance_and_transport_deduction():
     transport = next(d for d in result["deductions"] if d["name"] == "Cab / Transport Deduction")
     assert transport["amount"] == 6_000.0
     assert transport["rule_id"] is None
-    assert result["in_hand_annual"] == 684_000.0  # 750000 gross - 60000 PF - 6000 transport - 0 tax
+    assert result["in_hand_annual"] == 684_000.0
     assert result["employer_side"]["health_insurance"]["amount"] == 15_000.0
-    # neither is part of gross cash salary
     assert result["gross_salary_annual"] == 750_000.0
 
 
 def test_retention_bonus_and_sales_commission_count_toward_gross_and_variable_pay():
     ctc = {"basic": 300_000, "hra": 150_000, "retention_bonus": 200_000, "sales_commission": 100_000}
     result = engine.compute_in_hand(ctc, regime="new")
-    assert result["gross_salary_annual"] == 750_000.0  # 300000 + 150000 + 200000 + 100000
+    assert result["gross_salary_annual"] == 750_000.0
 
     flags = engine.detect_red_flags(ctc)
-    assert any(f["flag_id"] == "HIGH_VARIABLE_PAY" for f in flags)  # 300000/750000 = 40% > 30% threshold
+    assert any(f["flag_id"] == "HIGH_VARIABLE_PAY" for f in flags)
 
     classification = engine.classify_compensation_components(ctc, regime="new")
     variable = next(b for b in classification["buckets"] if b["bucket"] == "variable")
@@ -305,7 +282,6 @@ def test_equity_is_passed_through_but_never_affects_ctc_math():
     assert equity_result["equity"]["equity_type"] == "RSU"
     assert equity_result["equity"]["grant_value"] == 500_000
     assert equity_result["equity"]["cliff_period_months"] == 12
-    # equity must not change any actual money calculation
     assert equity_result["ctc_total"] == plain_result["ctc_total"]
     assert equity_result["in_hand_annual"] == plain_result["in_hand_annual"]
 

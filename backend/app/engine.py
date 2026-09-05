@@ -20,10 +20,6 @@ Regime = Literal["old", "new"]
 REQUIRED_CTC_FIELDS = ("basic", "hra")
 
 
-# ---------------------------------------------------------------------------
-# Shared helpers
-# ---------------------------------------------------------------------------
-
 def _round2(x: float) -> float:
     return round(x + 1e-9, 2)
 
@@ -128,10 +124,6 @@ def compute_hra_exemption(basic: float, hra_received: float, rent_paid: float, i
     }
 
 
-# ---------------------------------------------------------------------------
-# 1. compute_in_hand
-# ---------------------------------------------------------------------------
-
 def compute_in_hand(ctc_breakup: dict[str, Any], regime: Regime = "new", fy: str | None = None) -> dict[str, Any]:
     """Compute annual/monthly in-hand pay from a validated CTC breakup.
 
@@ -173,7 +165,6 @@ def compute_in_hand(ctc_breakup: dict[str, Any], regime: Regime = "new", fy: str
 
     deductions: list[dict[str, Any]] = []
 
-    # --- Employee PF (statutory base is Basic + DA, not Basic alone) ---
     pf_ceiling_monthly = rules.get_value("PF_WAGE_CEILING", fy)
     pf_base_annual = basic_plus_da if pf_on_full_basic else min(basic_plus_da, pf_ceiling_monthly * 12)
     employee_pf_rate = rules.get_value("PF_EMPLOYEE_RATE", fy)
@@ -185,7 +176,6 @@ def compute_in_hand(ctc_breakup: dict[str, Any], regime: Regime = "new", fy: str
         "frequency": "annual",
     })
 
-    # --- Employer PF (informational, not a deduction from gross-to-employee, but part of CTC) ---
     if ctc_breakup.get("employer_pf") is not None:
         employer_pf = float(ctc_breakup["employer_pf"])
         employer_pf_rule_id = "CTC_INPUT_OVERRIDE"
@@ -194,12 +184,10 @@ def compute_in_hand(ctc_breakup: dict[str, Any], regime: Regime = "new", fy: str
         employer_pf = employer_pf_rate * pf_base_annual
         employer_pf_rule_id = "PF_EMPLOYER_RATE"
 
-    # --- Gross cash salary paid to the employee (excludes employer-side CTC components) ---
     gross_salary = (basic + da + hra + special_allowance + other_allowances_total
                     + bonus + retention_bonus + sales_commission + lta_received)
     gross_monthly = gross_salary / 12.0
 
-    # --- ESI (employee + employer), only if gross monthly wage is within threshold ---
     esi_threshold = rules.get_value("ESI_WAGE_THRESHOLD", fy)
     esi_eligible = gross_monthly <= esi_threshold
     employee_esi = 0.0
@@ -214,7 +202,6 @@ def compute_in_hand(ctc_breakup: dict[str, Any], regime: Regime = "new", fy: str
             "frequency": "annual",
         })
 
-    # --- Gratuity (employer-side CTC provision, informational only, not a cash deduction) ---
     if ctc_breakup.get("gratuity") is not None:
         gratuity_provision = float(ctc_breakup["gratuity"])
         gratuity_rule_id = "CTC_INPUT_OVERRIDE"
@@ -223,18 +210,12 @@ def compute_in_hand(ctc_breakup: dict[str, Any], regime: Regime = "new", fy: str
         gratuity_provision = (basic_plus_da / 12.0) * gratuity_factor
         gratuity_rule_id = "GRATUITY_FACTOR"
 
-    # --- Employer NPS/Superannuation (Section 80CCD(2)): a CTC cost paid to
-    # the NPS fund, never part of gross cash salary, deductible from taxable
-    # income under BOTH regimes, capped as a % of Basic+DA ---
     employer_nps = float(ctc_breakup.get("employer_nps") or 0)
     nps_cap_pct = rules.get_value("NPS_80CCD2_CAP_PCT", fy)
     nps_deduction = min(employer_nps, nps_cap_pct * basic_plus_da) if employer_nps > 0 else 0.0
 
-    # --- Employer-paid health insurance premium: a CTC cost, not cash paid
-    # to the employee, so it never touches gross salary or taxable income ---
     health_insurance_premium = float(ctc_breakup.get("health_insurance_premium", 0) or 0)
 
-    # --- Professional tax (state-specific; not modelled, pass-through if supplied) ---
     if professional_tax > 0:
         deductions.append({
             "name": "Professional Tax",
@@ -243,8 +224,6 @@ def compute_in_hand(ctc_breakup: dict[str, Any], regime: Regime = "new", fy: str
             "frequency": "annual",
         })
 
-    # --- Cab/transport facility cost recovered from pay: a cash deduction,
-    # not a tax rule (no rule_id) ---
     if transport_deduction > 0:
         deductions.append({
             "name": "Cab / Transport Deduction",
@@ -253,13 +232,11 @@ def compute_in_hand(ctc_breakup: dict[str, Any], regime: Regime = "new", fy: str
             "frequency": "annual",
         })
 
-    # --- HRA exemption (old regime only; base is Basic + DA) ---
     hra_exemption_amount = 0.0
     if regime == "old" and rent_paid is not None:
         hra_result = compute_hra_exemption(basic_plus_da, hra, float(rent_paid), is_metro, fy)
         hra_exemption_amount = hra_result["exempt_amount"]
 
-    # --- Taxable income & income tax ---
     std_deduction_rule_id = "STD_DEDUCTION_OLD" if regime == "old" else "STD_DEDUCTION_NEW"
     std_deduction = rules.get_value(std_deduction_rule_id, fy)
 
@@ -269,8 +246,6 @@ def compute_in_hand(ctc_breakup: dict[str, Any], regime: Regime = "new", fy: str
         cap_80d = rules.get_value("CAP_80D_SELF", fy)
         claimed_80c = min(float(deductions_claimed.get("80C", 0) or 0), cap_80c)
         claimed_80d = min(float(deductions_claimed.get("80D", 0) or 0), cap_80d)
-        # Professional tax and LTA exemption are deductible from salary income
-        # under the old regime (Sections 16(iii) and 10(5)) but not under the new.
         taxable_income -= (claimed_80c + claimed_80d + professional_tax + lta_exemption_claimed)
 
     tax_result = compute_tax_for_regime(max(0.0, taxable_income), regime, fy)
@@ -336,10 +311,6 @@ def compute_in_hand(ctc_breakup: dict[str, Any], regime: Regime = "new", fy: str
     }
 
 
-# ---------------------------------------------------------------------------
-# 2. compute_regime_comparison
-# ---------------------------------------------------------------------------
-
 def compute_regime_comparison(gross_salary: float, deductions_claimed: dict[str, Any] | None = None,
                                hra_exemption: float = 0.0, fy: str | None = None) -> dict[str, Any]:
     """Compare old vs new regime tax liability for a given gross salary.
@@ -366,8 +337,6 @@ def compute_regime_comparison(gross_salary: float, deductions_claimed: dict[str,
     recommended: Regime = "old" if old_result["total_tax"] < new_result["total_tax"] else "new"
     savings = abs(old_result["total_tax"] - new_result["total_tax"])
 
-    # Per-deduction impact: tax saved by each old-regime-only deduction,
-    # computed as the marginal difference in old-regime tax with vs. without it.
     per_deduction_impact = []
 
     def _old_tax_without(exclude: dict[str, float]) -> float:
@@ -417,10 +386,6 @@ def compute_regime_comparison(gross_salary: float, deductions_claimed: dict[str,
         "per_deduction_impact": per_deduction_impact,
     }
 
-
-# ---------------------------------------------------------------------------
-# 3. detect_red_flags
-# ---------------------------------------------------------------------------
 
 def detect_red_flags(offer_data: dict[str, Any], fy: str | None = None) -> list[dict[str, Any]]:
     """Simple threshold checks over an offer's structured fields.
@@ -544,10 +509,6 @@ def detect_red_flags(offer_data: dict[str, Any], fy: str | None = None) -> list[
     return flags
 
 
-# ---------------------------------------------------------------------------
-# 4. classify_compensation_components
-# ---------------------------------------------------------------------------
-
 def classify_compensation_components(ctc_breakup: dict[str, Any], regime: Regime = "new",
                                       fy: str | None = None) -> dict[str, Any]:
     """Bucket a raw CTC breakup into Fixed / Employer Contributions / Variable /
@@ -655,10 +616,6 @@ def classify_compensation_components(ctc_breakup: dict[str, Any], regime: Regime
     }
 
 
-# ---------------------------------------------------------------------------
-# 5. compute_ctc_waterfall
-# ---------------------------------------------------------------------------
-
 def compute_ctc_waterfall(ctc_breakup: dict[str, Any], regime: Regime = "new",
                            fy: str | None = None) -> dict[str, Any]:
     """Reshape a compute_in_hand() result into an ordered CTC -> in-hand
@@ -705,10 +662,6 @@ def compute_ctc_waterfall(ctc_breakup: dict[str, Any], regime: Regime = "new",
         "in_hand_monthly": result["in_hand_monthly"],
     }
 
-
-# ---------------------------------------------------------------------------
-# 6. compute_offer_quality_score
-# ---------------------------------------------------------------------------
 
 def compute_offer_quality_score(ctc_breakup: dict[str, Any], regime: Regime = "new",
                                  fy: str | None = None) -> dict[str, Any]:
@@ -779,10 +732,6 @@ def compute_offer_quality_score(ctc_breakup: dict[str, Any], regime: Regime = "n
     }
 
 
-# ---------------------------------------------------------------------------
-# 7. compare_offers
-# ---------------------------------------------------------------------------
-
 def compare_offers(offer_a: dict[str, Any], offer_b: dict[str, Any], fy: str | None = None) -> dict[str, Any]:
     """Side-by-side comparison of two offers. Each of offer_a/offer_b is
     {"label": str, "ctc_breakup": {...}, "regime": "old"|"new"}. Reuses
@@ -830,15 +779,10 @@ def compare_offers(offer_a: dict[str, Any], offer_b: dict[str, Any], fy: str | N
     }
 
 
-# ---------------------------------------------------------------------------
-# 8. compute_epf_gratuity_timeline
-# ---------------------------------------------------------------------------
-
 def _add_years(d: date, years: int) -> date:
     try:
         return d.replace(year=d.year + years)
     except ValueError:
-        # joining date was Feb 29 on a leap year; land on Feb 28 instead
         return d.replace(year=d.year + years, day=28)
 
 

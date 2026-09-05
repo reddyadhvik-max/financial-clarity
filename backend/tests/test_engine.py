@@ -16,7 +16,6 @@ def test_new_regime_no_tax_up_to_12l_taxable():
 
 def test_new_regime_tax_above_12l_no_rebate():
     result = engine.compute_tax_for_regime(1_500_000, "new")
-    # 4-8L@5%=20000, 8-12L@10%=40000, 12-15L@15%=45000
     assert result["tax_before_rebate"] == 105000.0
     assert result["rebate_amount"] == 0.0
     assert result["cess_amount"] == 4200.0
@@ -42,7 +41,6 @@ def test_hra_exemption_least_of_three():
     result = engine.compute_hra_exemption(
         basic=600_000, hra_received=300_000, rent_paid=240_000, is_metro=True
     )
-    # limbs: actual=300000, rent-10%basic=180000, 50%*basic=300000 -> min=180000
     assert result["exempt_amount"] == 180_000.0
 
 
@@ -50,7 +48,6 @@ def test_hra_exemption_non_metro_lower_pct():
     result = engine.compute_hra_exemption(
         basic=600_000, hra_received=300_000, rent_paid=400_000, is_metro=False
     )
-    # limbs: actual=300000, rent-10%basic=340000, 40%*basic=240000 -> min=240000
     assert result["exempt_amount"] == 240_000.0
 
 
@@ -65,14 +62,14 @@ def test_compute_in_hand_new_regime_full_scenario():
     result = engine.compute_in_hand(ctc, regime="new")
 
     assert result["gross_salary_annual"] == 1_200_000.0
-    assert result["esi_eligible"] is False  # gross monthly = 100000 > 21000
+    assert result["esi_eligible"] is False
 
     employee_pf = next(d for d in result["deductions"] if d["name"] == "Employee PF (EPF)")
-    assert employee_pf["amount"] == 72_000.0  # 12% of 600000
+    assert employee_pf["amount"] == 72_000.0
     assert employee_pf["rule_id"] == "PF_EMPLOYEE_RATE"
 
     income_tax = next(d for d in result["deductions"] if d["name"] == "Income Tax (TDS)")
-    assert income_tax["amount"] == 0.0  # taxable 1,125,000 <= 12L rebate threshold
+    assert income_tax["amount"] == 0.0
 
     assert result["total_deductions_annual"] == 72_000.0
     assert result["in_hand_annual"] == 1_128_000.0
@@ -84,13 +81,12 @@ def test_compute_in_hand_new_regime_full_scenario():
 
 def test_compute_in_hand_rejects_missing_required_fields():
     with pytest.raises(ValueError):
-        engine.compute_in_hand({"basic": 500_000})  # missing hra
+        engine.compute_in_hand({"basic": 500_000})
 
 
 def test_compute_in_hand_esi_eligible_low_gross():
     ctc = {"basic": 150_000, "hra": 60_000, "pf_on_full_basic": True}
     result = engine.compute_in_hand(ctc, regime="new")
-    # gross monthly = 210000/12 = 17500 <= 21000 threshold
     assert result["esi_eligible"] is True
     esi = next(d for d in result["deductions"] if d["name"] == "Employee ESI")
     assert esi["amount"] == pytest.approx(0.0075 * 210_000, abs=0.01)
@@ -137,4 +133,4 @@ def test_detect_red_flags_bad_offer_flags_everything():
         "JOINING_BONUS_CLAWBACK",
     }
     for f in flags:
-        assert f["message"]  # every flag must carry a plain-language reason
+        assert f["message"]
