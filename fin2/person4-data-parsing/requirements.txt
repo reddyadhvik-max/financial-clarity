@@ -1,0 +1,17 @@
+fastapi>=0.110
+uvicorn[standard]>=0.27
+pydantic>=2.5
+python-multipart>=0.0.9
+pdfplumber>=0.11
+
+# Optional — only needed for the OCR fallback path (scanned/image-only
+# PDFs and standalone images). Also requires the Tesseract OCR binary and
+# (for PDF rasterization) the Poppler binaries on PATH — see README.md.
+pytesseract>=0.3
+pdf2image>=1.17
+Pillow>=10
+
+# Test-only:
+pytest>=8.0
+# reportlab is needed only to regenerate tests/sample_offer_letter.pdf via
+# tests/generate_sample_pdf.py — not needed to run the committed test suite.

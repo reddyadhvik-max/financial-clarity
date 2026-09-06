@@ -1,0 +1,10 @@
+{
+  "description": "Helps Indian professionals decode salary offers, estimate in-hand pay, optimize taxes, and compare job offers for informed financial decisions.",
+  "robots": {
+    "index": false
+  },
+  "accessibility": {
+    "addBypassLinks": false,
+    "ignoreReducedMotion": false
+  }
+}
