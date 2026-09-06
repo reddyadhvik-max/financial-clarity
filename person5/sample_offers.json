@@ -1,0 +1,63 @@
+{
+  "_readme": "Canonical demo data for Financial Clarity. Person 5 owns this file — these three offers are the only ones guaranteed to be exercised in the pitch/demo. Each has a fixed, known-good response shape verified against POST /breakdown (see scripts/e2e_smoke.py). Keep the frontend's SAMPLE_OFFERS in frontend/app.js in sync with these if you change a value here.",
+  "offers": [
+    {
+      "id": "clean",
+      "title": "Clean offer — Metro SDE-1, new regime",
+      "why": "The happy path: no red flags, straightforward new-regime ledger. Use this first in the demo to establish what a 'normal' breakdown looks like.",
+      "regime": "new",
+      "ctc_breakup": {
+        "basic": 400000,
+        "hra": 200000,
+        "special_allowance": 150000,
+        "bonus": 40000,
+        "employer_pf": 48000,
+        "is_metro": true,
+        "notice_period_days": 60,
+        "gratuity_clause_present": true,
+        "has_service_bond": false,
+        "joining_bonus_has_clawback": false
+      },
+      "expect": { "red_flag_count": 0, "in_hand_monthly": 61833.33 }
+    },
+    {
+      "id": "redflags",
+      "title": "Red-flag offer — aggressive bonus structure, new regime",
+      "why": "The 'gotcha' offer: fires 7 of the tool's red flags at once (high variable pay, low basic, missing PF, no gratuity clause, long notice, service bond, joining-bonus clawback). This is the single best slide for the pitch — a human skimming this PDF would likely miss all seven.",
+      "regime": "new",
+      "ctc_breakup": {
+        "basic": 200000,
+        "hra": 100000,
+        "special_allowance": 200000,
+        "bonus": 500000,
+        "is_metro": true,
+        "notice_period_days": 120,
+        "gratuity_clause_present": false,
+        "has_service_bond": true,
+        "joining_bonus_has_clawback": true
+      },
+      "expect": { "red_flag_count": 7, "in_hand_monthly": 81333.33 }
+    },
+    {
+      "id": "senior",
+      "title": "Senior offer — old regime, HRA + 80C + 80D",
+      "why": "Shows the old-regime path: HRA exemption limb math, 80C/80D deductions claimed, and a non-trivial tax bracket ladder. Pair with POST /regime-comparison on the same gross salary to show the recommended-regime callout.",
+      "regime": "old",
+      "ctc_breakup": {
+        "basic": 900000,
+        "hra": 450000,
+        "special_allowance": 300000,
+        "bonus": 150000,
+        "employer_pf": 108000,
+        "is_metro": true,
+        "rent_paid": 360000,
+        "deductions_claimed": { "80C": 150000, "80D": 25000 },
+        "notice_period_days": 90,
+        "gratuity_clause_present": true,
+        "has_service_bond": false,
+        "joining_bonus_has_clawback": false
+      },
+      "expect": { "red_flag_count": 0, "in_hand_monthly": 123320.0, "hra_exemption_amount": 270000.0 }
+    }
+  ]
+}

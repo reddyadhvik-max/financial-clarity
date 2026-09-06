@@ -1,0 +1,269 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Offer Letter Comparison — Test UI</title>
+<style>
+  :root {
+    --ink: #16241c; --ink-soft: #5b6b60; --bg: #f4f7f5; --panel: #ffffff;
+    --border: #dbe4de; --found: #1a8f5a; --estimated: #b8790f; --missing: #94a3a0;
+    --na: #b3392f; --accent: #1a8f5a;
+  }
+  * { box-sizing: border-box; }
+  body { font-family: -apple-system, "Segoe UI", sans-serif; background: var(--bg); color: var(--ink);
+         margin: 0; padding: 2rem; }
+  h1 { font-size: 1.4rem; margin: 0 0 0.3rem; }
+  .subtitle { color: var(--ink-soft); margin: 0 0 1.5rem; font-size: 0.9rem; }
+  .panel { background: var(--panel); border: 1px solid var(--border); border-radius: 10px;
+           padding: 1.25rem 1.5rem; margin-bottom: 1.25rem; }
+  .row { display: flex; gap: 1.5rem; flex-wrap: wrap; align-items: flex-end; }
+  .field { display: flex; flex-direction: column; gap: 0.3rem; min-width: 260px; }
+  label { font-size: 0.8rem; color: var(--ink-soft); font-weight: 600; }
+  select, button { font-size: 0.95rem; padding: 0.5rem 0.7rem; border-radius: 8px;
+                   border: 1px solid var(--border); background: #fff; color: var(--ink); }
+  button { cursor: pointer; background: var(--accent); color: #fff; border: none; font-weight: 600; }
+  button:hover { opacity: 0.9; }
+  button.secondary { background: #fff; color: var(--ink); border: 1px solid var(--border); font-weight: 500; }
+  .status { font-size: 0.85rem; color: var(--ink-soft); margin-top: 0.6rem; }
+  table { width: 100%; border-collapse: collapse; font-size: 0.88rem; }
+  th, td { padding: 0.5rem 0.6rem; border-bottom: 1px solid var(--border); text-align: left; vertical-align: top; }
+  th { color: var(--ink-soft); font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.02em; }
+  tr.category-row td { background: #eef3f0; font-weight: 700; font-size: 0.78rem;
+                        text-transform: uppercase; letter-spacing: 0.03em; color: var(--ink-soft); }
+  .value-na { color: var(--na); font-style: italic; }
+  .tier { display: inline-block; font-size: 0.68rem; font-weight: 700; text-transform: uppercase;
+          padding: 0.1rem 0.4rem; border-radius: 999px; margin-left: 0.4rem; }
+  .tier-found { background: rgba(26,143,90,0.12); color: var(--found); }
+  .tier-estimated { background: rgba(184,121,15,0.12); color: var(--estimated); }
+  .tier-missing { background: rgba(148,163,160,0.15); color: var(--missing); }
+  .winner { font-weight: 700; }
+  .flags-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 0.5rem; }
+  .flag { font-size: 0.85rem; padding: 0.5rem 0.7rem; border-radius: 8px; margin-bottom: 0.4rem; }
+  .flag-critical { background: rgba(179,57,47,0.1); color: var(--na); }
+  .flag-warning { background: rgba(184,121,15,0.1); color: var(--estimated); }
+  .flag-info { background: rgba(91,107,96,0.1); color: var(--ink-soft); }
+  .summary-line { font-size: 0.95rem; margin: 0.3rem 0; }
+  #error { color: var(--na); font-size: 0.9rem; margin-top: 0.6rem; white-space: pre-wrap; }
+  .session-note { font-size: 0.78rem; color: var(--ink-soft); }
+</style>
+</head>
+<body>
+
+<h1>Offer Letter Comparison — Test UI</h1>
+<p class="subtitle">Manual test harness for the person4-data-parsing API. Data lives only in this
+browser session's in-memory backend session — nothing is written to disk.</p>
+
+<div class="panel">
+  <div class="row">
+    <div class="field">
+      <label for="offerA">Offer A</label>
+      <select id="offerA"></select>
+    </div>
+    <div class="field">
+      <label for="offerB">Offer B</label>
+      <select id="offerB"></select>
+    </div>
+    <button id="compareBtn">Compare</button>
+    <button id="endSessionBtn" class="secondary">End Session</button>
+  </div>
+  <div class="status" id="status">Session: not started yet — click Compare to begin.</div>
+  <div id="error"></div>
+</div>
+
+<div class="panel" id="summaryPanel" hidden>
+  <h2 style="margin-top:0;font-size:1.1rem;">Summary</h2>
+  <div id="summaryContent"></div>
+</div>
+
+<div class="panel" id="flagsPanel" hidden>
+  <h2 style="margin-top:0;font-size:1.1rem;">Red Flags</h2>
+  <div class="flags-grid" id="flagsGrid"></div>
+</div>
+
+<div class="panel" id="tablePanel" hidden>
+  <h2 style="margin-top:0;font-size:1.1rem;">Field-by-Field Comparison</h2>
+  <table>
+    <thead>
+      <tr><th>Field</th><th id="colA">Offer A</th><th id="colB">Offer B</th><th>Higher</th></tr>
+    </thead>
+    <tbody id="tableBody"></tbody>
+  </table>
+</div>
+
+<script>
+const API_BASE = "http://127.0.0.1:8100";
+const SAMPLE_FILES = Array.from({length: 10}, (_, i) => `sample_offer_${String(i + 1).padStart(2, "0")}.txt`);
+
+let sessionId = null;
+const statusEl = document.getElementById("status");
+const errorEl = document.getElementById("error");
+
+function populateDropdowns() {
+  const a = document.getElementById("offerA");
+  const b = document.getElementById("offerB");
+  SAMPLE_FILES.forEach((name, i) => {
+    a.add(new Option(name, name, i === 0, i === 0));
+    b.add(new Option(name, name, i === 1, i === 1));
+  });
+}
+populateDropdowns();
+
+function setStatus(text) { statusEl.textContent = text; }
+function setError(text) { errorEl.textContent = text || ""; }
+
+async function apiFetch(path, options = {}) {
+  const headers = Object.assign({}, options.headers || {});
+  if (sessionId) headers["X-Session-Id"] = sessionId;
+  const res = await fetch(`${API_BASE}${path}`, Object.assign({}, options, { headers }));
+  const returnedSession = res.headers.get("X-Session-Id");
+  if (returnedSession) sessionId = returnedSession;
+  if (!res.ok) {
+    const body = await res.text();
+    throw new Error(`${path} -> HTTP ${res.status}: ${body}`);
+  }
+  return res.json();
+}
+
+async function loadSampleText(filename) {
+  // this page lives at /webui/index.html; the samples live as siblings of
+  // webui/ under /sample_offers/ — both served by the same static server.
+  const res = await fetch(`../sample_offers/${filename}`);
+  if (!res.ok) throw new Error(`Could not load ${filename} (HTTP ${res.status})`);
+  return res.text();
+}
+
+function tierClass(tier) { return `tier tier-${tier}`; }
+
+function renderValue(value, tier) {
+  if (value === "NA") return `<span class="value-na">NA</span>`;
+  const display = typeof value === "number" ? value.toLocaleString("en-IN") : value;
+  return `${display}<span class="${tierClass(tier)}">${tier}</span>`;
+}
+
+function renderComparison(comparison, labelA, labelB, metaA, metaB) {
+  document.getElementById("colA").textContent = labelA;
+  document.getElementById("colB").textContent = labelB;
+
+  const summary = comparison.summary;
+  document.getElementById("summaryContent").innerHTML = `
+    <p class="summary-line"><strong>${labelA}</strong> (${metaA.designation || "—"}) vs
+       <strong>${labelB}</strong> (${metaB.designation || "—"})</p>
+    <p class="summary-line">Total CTC difference: <strong>${
+      summary.total_ctc_difference !== null ? Number(summary.total_ctc_difference).toLocaleString("en-IN") : "N/A"
+    }</strong> ${summary.total_ctc_higher_offer ? `(higher: <span class="winner">${summary.total_ctc_higher_offer}</span>)` : ""}</p>
+    <p class="summary-line">Fields where each offer is higher: <strong>${labelA}</strong> ${summary.fields_higher_in[labelA]}
+       &nbsp;|&nbsp; <strong>${labelB}</strong> ${summary.fields_higher_in[labelB]}</p>
+    <p class="summary-line">Only disclosed by <strong>${labelA}</strong>: ${
+      summary.fields_only_disclosed_by[labelA].join(", ") || "none"
+    }</p>
+    <p class="summary-line">Only disclosed by <strong>${labelB}</strong>: ${
+      summary.fields_only_disclosed_by[labelB].join(", ") || "none"
+    }</p>
+  `;
+  document.getElementById("summaryPanel").hidden = false;
+
+  const tbody = document.getElementById("tableBody");
+  tbody.innerHTML = "";
+  let lastCategory = null;
+  comparison.rows.forEach((row) => {
+    if (row.category !== lastCategory) {
+      lastCategory = row.category;
+      const catRow = document.createElement("tr");
+      catRow.className = "category-row";
+      catRow.innerHTML = `<td colspan="4">${row.category.replace("_", " ")}</td>`;
+      tbody.appendChild(catRow);
+    }
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td>${row.label}</td>
+      <td>${renderValue(row[labelA], row[`${labelA}_confidence`])}</td>
+      <td>${renderValue(row[labelB], row[`${labelB}_confidence`])}</td>
+      <td>${row.higher_offer ? `<span class="winner">${row.higher_offer}</span>` : "—"}</td>
+    `;
+    tbody.appendChild(tr);
+  });
+  document.getElementById("tablePanel").hidden = false;
+}
+
+function renderFlags(resultA, labelA, resultB, labelB) {
+  const grid = document.getElementById("flagsGrid");
+  grid.innerHTML = "";
+  [[resultA, labelA], [resultB, labelB]].forEach(([result, label]) => {
+    const col = document.createElement("div");
+    const heading = document.createElement("div");
+    heading.innerHTML = `<strong>${label}</strong>`;
+    col.appendChild(heading);
+    if (!result.red_flags.length) {
+      const none = document.createElement("div");
+      none.className = "flag flag-info";
+      none.textContent = "No red flags.";
+      col.appendChild(none);
+    }
+    result.red_flags.forEach((flag) => {
+      const div = document.createElement("div");
+      div.className = `flag flag-${flag.severity}`;
+      div.textContent = `[${flag.flag_id}] ${flag.message}`;
+      col.appendChild(div);
+    });
+    grid.appendChild(col);
+  });
+  document.getElementById("flagsPanel").hidden = false;
+}
+
+async function compare() {
+  setError("");
+  setStatus("Parsing both offers…");
+  try {
+    const fileA = document.getElementById("offerA").value;
+    const fileB = document.getElementById("offerB").value;
+
+    const [textA, textB] = await Promise.all([loadSampleText(fileA), loadSampleText(fileB)]);
+    const resultA = await apiFetch("/parse/text", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ text: textA, source_filename: fileA }),
+    });
+    const resultB = await apiFetch("/parse/text", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ text: textB, source_filename: fileB }),
+    });
+
+    const labelA = resultA.metadata.company_name || fileA;
+    const labelB = resultB.metadata.company_name || fileB;
+
+    setStatus("Comparing…");
+    const comparison = await apiFetch("/compare", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        offer_id_a: resultA.offer_id, offer_id_b: resultB.offer_id,
+        label_a: labelA, label_b: labelB,
+      }),
+    });
+
+    renderComparison(comparison, labelA, labelB, resultA.metadata, resultB.metadata);
+    renderFlags(resultA, labelA, resultB, labelB);
+    setStatus(`Session: ${sessionId} — compared ${fileA} vs ${fileB}.`);
+  } catch (err) {
+    setError(err.message);
+    setStatus("Failed — see error above. Is the API running at " + API_BASE + "?");
+  }
+}
+
+async function endSession() {
+  if (!sessionId) { setStatus("No active session."); return; }
+  try {
+    await apiFetch("/session", { method: "DELETE" });
+    setStatus(`Session ${sessionId} closed — its data is gone.`);
+    sessionId = null;
+    document.getElementById("summaryPanel").hidden = true;
+    document.getElementById("flagsPanel").hidden = true;
+    document.getElementById("tablePanel").hidden = true;
+  } catch (err) {
+    setError(err.message);
+  }
+}
+
+document.getElementById("compareBtn").addEventListener("click", compare);
+document.getElementById("endSessionBtn").addEventListener("click", endSession);
+</script>
+</body>
+</html>

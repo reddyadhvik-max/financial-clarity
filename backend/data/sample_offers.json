@@ -1,0 +1,60 @@
+{
+  "note": "Anonymized, hand-built sample offers for the team to build/demo against before offer-letter parsing works. Each is a valid POST body for /breakdown, /waterfall, /classify, /quality-score (nest under \"ctc_breakup\") and /gratuity-epf-timeline (use \"joining_date\" directly).",
+  "samples": [
+    {
+      "id": "fresher_nonmetro_clean",
+      "label": "Fresher — Non-Metro, Clean Offer",
+      "description": "Straightforward entry-level offer, no red flags expected: PF and gratuity both explicitly stated, notice period standard.",
+      "joining_date": "2026-07-01",
+      "ctc_breakup": {
+        "basic": 300000,
+        "hra": 120000,
+        "special_allowance": 180000,
+        "bonus": 30000,
+        "employer_pf": 36000,
+        "gratuity": 17307.69,
+        "pf_on_full_basic": true,
+        "is_metro": false,
+        "gratuity_clause_present": true,
+        "notice_period_days": 30
+      }
+    },
+    {
+      "id": "midlevel_metro_bonus_heavy",
+      "label": "Mid-Level — Metro, Bonus-Heavy",
+      "description": "Deliberately risky offer: variable pay far above the 30% CTC threshold, no gratuity clause, a long notice period, and a service bond — should trip HIGH_VARIABLE_PAY, MISSING_GRATUITY_CLAUSE, LONG_NOTICE_PERIOD and SERVICE_BOND red flags.",
+      "joining_date": "2024-01-15",
+      "ctc_breakup": {
+        "basic": 500000,
+        "hra": 250000,
+        "special_allowance": 150000,
+        "bonus": 600000,
+        "pf_on_full_basic": true,
+        "is_metro": true,
+        "gratuity_clause_present": false,
+        "notice_period_days": 120,
+        "has_service_bond": true
+      }
+    },
+    {
+      "id": "senior_metro_old_regime",
+      "label": "Senior — High CTC, Old-Regime Deductions",
+      "description": "Higher-income offer with rent and 80C/80D deductions supplied, for exercising the old-vs-new regime comparison and HRA exemption path.",
+      "joining_date": "2019-04-01",
+      "ctc_breakup": {
+        "basic": 1500000,
+        "hra": 750000,
+        "special_allowance": 500000,
+        "bonus": 250000,
+        "employer_pf": 180000,
+        "pf_on_full_basic": true,
+        "is_metro": true,
+        "rent_paid": 600000,
+        "professional_tax": 2400,
+        "deductions_claimed": {"80C": 150000, "80D": 25000},
+        "gratuity_clause_present": true,
+        "notice_period_days": 60
+      }
+    }
+  ]
+}
